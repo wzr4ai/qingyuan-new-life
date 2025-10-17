@@ -1,4 +1,4 @@
-# config.py
+# qingyuan-new-life/backend/src/core/config.py
 import os
 from pydantic_settings import BaseSettings
 from typing import Literal
@@ -9,7 +9,6 @@ class Settings(BaseSettings):
     所有敏感信息都从环境变量或 .env 文件加载
     """
     # --- 环境配置 ---
-    # 这里的 ENVIRONMENT 可以是 "development", "testing", "production"
     ENVIRONMENT: Literal["dev", "test", "prod"] = "prod"
 
     # --- 核心安全配置 ---
@@ -18,7 +17,6 @@ class Settings(BaseSettings):
 
     # --- 应用运行配置 ---
     APP_HOST: str = "0.0.0.0"
-    # 根据环境自动设置端口
     APP_PORT: int = 8002
 
     # --- 数据库配置 ---
@@ -26,23 +24,10 @@ class Settings(BaseSettings):
     MYSQL_PASSWORD: str
     MYSQL_HOST: str
     MYSQL_PORT: int
-    
-    # --- 【修正】添加缺失的字段 ---
-    #DEV_MYSQL_NAME: str
-    #TEST_MYSQL_NAME: str
-    #PROD_MYSQL_NAME: str
+    DB_NAME: str = "qyxs_dev"
 
-    DB_NAME: str = "qyxs_dev"  # 默认值，实际值会根据环境动态返回
-    
-    #@property
-    #def DB_NAME(self) -> str:
-    #    """计算属性：根据当前的 ENVIRONMENT 动态返回正确的数据库名称。"""
-    #    if self.ENVIRONMENT == "development":
-    #        return self.DEV_MYSQL_NAME
-    #    elif self.ENVIRONMENT == "testing":
-    #        return self.TEST_MYSQL_NAME
-    #    else: # "production"
-    #        return self.PROD_MYSQL_NAME
+    # --- redis 配置 ---
+    REDIS_PASSWORD: str
 
     @property
     def DATABASE_URI(self) -> str:
@@ -58,6 +43,7 @@ class Settings(BaseSettings):
     TENCENT_SECRET_KEY: str
     COS_REGION: str
     COS_BUCKET_NAME: str
+    COS_CDN_URL: str
 
     # --- 管理员配置 ---
     ADMIN_OPENID: str
@@ -66,13 +52,16 @@ class Settings(BaseSettings):
     WECHAT_APP_ID: str
     WECHAT_APP_SECRET: str
     
-    # --- 【修正】添加缺失的字段 ---
     XHS_APP_ID: str
     XHS_APP_SECRET: str
 
     # --- 微信公众号配置 ---
     WECHAT_MP_APP_ID: str
     WECHAT_MP_APP_SECRET: str
+
+    # --- LLM 服务提供商配置 ---
+    FAST_MODEL_PROVIDERS: str
+    DEEP_MODEL_PROVIDERS: str
 
     class Config:
         case_sensitive = True
