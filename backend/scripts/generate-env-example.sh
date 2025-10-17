@@ -7,14 +7,14 @@ set -e
 # 获取脚本文件所在的目录
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 
-echo "脚本目录: $SCRIPT_DIR"
+# 我们假设脚本在 `scripts` 目录中，所以项目根目录是上一级
 PROJECT_ROOT=$SCRIPT_DIR
 
 echo "项目根目录: $PROJECT_ROOT"
 
 # 定义源文件和目标文件的绝对路径
-ENV_FILE="$PROJECT_ROOT/backend/.env"
-EXAMPLE_FILE="$PROJECT_ROOT/backend/.env.example"
+ENV_FILE="$PROJECT_ROOT/.env"
+EXAMPLE_FILE="$PROJECT_ROOT/.env.example"
 
 # 检查 .env 文件是否存在
 if [ ! -f "$ENV_FILE" ]; then
