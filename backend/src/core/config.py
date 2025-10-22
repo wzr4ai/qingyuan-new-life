@@ -63,6 +63,9 @@ class Settings(BaseSettings):
     FAST_MODEL_PROVIDERS: str
     DEEP_MODEL_PROVIDERS: str
 
+    #REDIS_URL: str = property(lambda self: f"redis://:{self.REDIS_PASSWORD}@{os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', 6379)}/0")
+    REDIS_URL: str = "redis://localhost:6379"
+    
     class Config:
         case_sensitive = True
         env_file = ".env"

@@ -1,5 +1,6 @@
 # qingyuan-new-life/backend/src/main.py
 from fastapi import FastAPI
+from core.lifespan import lifespan
 from core.config import settings
 from modules.auth import router as auth_router
 
@@ -12,6 +13,7 @@ app = FastAPI(
     title="青元新生 后端服务",
     description="青元新生项目的后端服务，提供API接口支持。",
     version="0.0.1",
+    lifespan=lifespan,
     root_path=api_root_path,
     # 仅在非生产环境下启用文档
     docs_url="/docs" if settings.ENVIRONMENT != "production" else None,
@@ -26,7 +28,7 @@ async def read_root():
     """
     return {"message": "Welcome to the FastAPI backend service!"}
 
-app.include_router(public_api.router, prefix="/public", tags=["公共接口"])
+app.include_router(auth_router, prefix="/auth", tags=["认证"])
 
 if __name__ == "__main__":
     import uvicorn
