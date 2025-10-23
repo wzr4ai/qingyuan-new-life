@@ -1,41 +1,46 @@
 # src/core/database.py
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy.orm import DeclarativeBase
+from typing import AsyncGenerator
 
-from .config import settings
+# 从您的 config.py 导入 settings 实例
+from src.core.config import settings
 
-# 1. 创建数据库连接 URL
-# 格式: "postgresql://user:password@postgresserver/db"
-SQLALCHEMY_DATABASE_URL = settings.DATABASE_URI
-
-# 2. 创建 SQLAlchemy 引擎 (Engine)
-# 'engine' 是 SQLAlchemy 应用的核心接口，负责与数据库建立连接。
-# connect_args 是只为 SQLite 需要的。对于其他数据库，你不需要它。
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    # connect_args={"check_same_thread": False} # 仅在_sqlite_时需要
+# 1. 创建异步引擎
+#    我们直接使用您在 config.py 中定义的 DATABASE_URI
+engine = create_async_engine(
+    settings.DATABASE_URI,
+    echo=True,  # 在开发环境中打印 SQL 语句，方便调试
+    pool_pre_ping=True
 )
 
-# 3. 创建数据库会话工厂 (SessionLocal)
-# 每个 SessionLocal 的实例都将是一个数据库会话。
-# autocommit=False 和 autoflush=False 是为了让你能手动控制事务。
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# 2. 创建异步会话工厂
+AsyncSessionLocal = async_sessionmaker(
+    bind=engine,
+    autocommit=False,
+    autoflush=False,
+    expire_on_commit=False,  # 异步会话中推荐
+)
 
-# 4. 创建一个声明基类 (Base)
-# 之后我们创建的所有数据库模型（ORM models）都将继承这个类。
-Base = declarative_base()
+# 3. 创建所有模型都将继承的 Base 类
+class Base(DeclarativeBase):
+    pass
 
-
-# 5. 创建一个可复用的依赖项 (Dependency)
-def get_db():
+# 4. 数据库依赖项 (异步版本)
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
-    一个 FastAPI 依赖项，它为每个请求创建一个新的 SQLAlchemy 会话，
-    并在请求完成后关闭它。
+    FastAPI 依赖项，用于获取异步数据库会话。
     """
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+            # 注意：在异步中，我们通常不在依赖项中 commit。
+            # Service 层负责 commit 或 rollback。
+            # 如果您希望在请求结束时自动提交，可以取消下面这行注释
+            # await session.commit() 
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()

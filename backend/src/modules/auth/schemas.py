@@ -1,12 +1,22 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional
-class UserCreateSchema(BaseModel):
-    email: EmailStr
-    password: str
-    full_name: Optional[str] = None
+# src/modules/auth/schemas.py
 
-class UserCreate(BaseModel):
-    email: EmailStr
-    password: str
-    full_name: Optional[str] = None
+from pydantic import BaseModel
 
+class WxLoginRequest(BaseModel):
+    """
+    微信登录请求体
+    """
+    code: str
+
+class TokenResponse(BaseModel):
+    """
+    返回给客户端的 Token
+    """
+    access_token: str
+    token_type: str = "bearer"
+
+class TokenPayload(BaseModel):
+    """
+    JWT Token 中存储的数据
+    """
+    sub: str  # subject, 存储 user_uid

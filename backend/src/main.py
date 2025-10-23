@@ -1,8 +1,17 @@
 # qingyuan-new-life/backend/src/main.py
 from fastapi import FastAPI
-from core.lifespan import lifespan
-from core.config import settings
-from modules.auth import router as auth_router
+#from core.lifespan import lifespan
+from src.core.config import settings
+
+from src.modules.auth.router import router as auth_router
+from src.modules.test.router import router as test_router
+from src.modules.admin.router import router as admin_router
+from src.modules.schedule.router import router as schedule_router
+
+import asyncio
+import time
+import psutil
+import os
 
 # 根据不同环境动态设置 API 根路径
 api_root_path = ""
@@ -13,23 +22,27 @@ app = FastAPI(
     title="青元新生 后端服务",
     description="青元新生项目的后端服务，提供API接口支持。",
     version="0.0.1",
-    lifespan=lifespan,
+    #lifespan=lifespan,
     root_path=api_root_path,
     # 仅在非生产环境下启用文档
     docs_url="/docs" if settings.ENVIRONMENT != "production" else None,
 )
 
 # 添加一个根路径，用于健康检查或欢迎信息
-@app.get("/", summary="服务根路径", tags=["Default"])
+@app.get("/status", summary="服务根路径", tags=["Default"])
 async def read_root():
     """
-    一个简单的根节点，访问 / 时返回欢迎信息。
-    可用于检查服务是否正常运行。
+    欢迎信息或健康检查端点
     """
-    return {"message": "Welcome to the FastAPI backend service!"}
+    status = {
+        "service": "Qingyuan New Life Backend",
+        "status": "running",
+        "environment": settings.ENVIRONMENT,
+        "timestamp": time.time()
+    }
+    return status
 
-app.include_router(auth_router, prefix="/auth", tags=["认证"])
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host='0.0.0.0', port=8000)
+app.include_router(auth_router, prefix="/auth") # 用户认证相关路由
+app.include_router(test_router, prefix="/test") # 测试相关路由
+app.include_router(admin_router, prefix="/admin") # 管理后台相关路由
+app.include_router(schedule_router, prefix="/schedule") # 预约调度相关路由

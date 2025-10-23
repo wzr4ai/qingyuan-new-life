@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     MYSQL_PASSWORD: str
     MYSQL_HOST: str
     MYSQL_PORT: int
-    DB_NAME: str = "qyxs_dev"
+    DB_NAME: str = "qy_dev"
 
     # --- redis 配置 ---
     REDIS_PASSWORD: str
