@@ -54,6 +54,8 @@ class User(Base):
     role: Mapped[str] = Column(Enum("customer", "technician", "admin", name="user_role_enum"), default="customer")
     level: Mapped[int] = mapped_column(Integer, default=1)
 
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=True)
+    
     # 关联的第三方社交账号
     social_accounts: Mapped[list["SocialAccount"]] = relationship(
         "SocialAccount", 

@@ -20,3 +20,10 @@ class TokenPayload(BaseModel):
     JWT Token 中存储的数据
     """
     sub: str  # subject, 存储 user_uid
+
+class AdminLoginRequest(BaseModel):
+    """
+    管理员 H5 登录请求体
+    """
+    phone: str
+    password: str

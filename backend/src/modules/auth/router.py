@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.database import get_db
 from . import service as auth_service
-from .schemas import WxLoginRequest, TokenResponse
+from .schemas import WxLoginRequest, TokenResponse, AdminLoginRequest
 
 router = APIRouter(
     tags=["Authentication 用户认证"],
@@ -57,6 +57,33 @@ async def wx_login(
         )
 
     # 3. 创建 Access Token (保持不变)
+    access_token = auth_service.create_access_token(subject=user.uid)
+    
+    return TokenResponse(access_token=access_token)
+
+@router.post(
+    "/admin-login",
+    response_model=TokenResponse,
+    summary="管理员 H5 登录 (手机号+密码)"
+)
+async def admin_login(
+    login_data: AdminLoginRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    (Admin/Technician Only)
+    用于 H5 管理后台的登录。
+    """
+    user = await auth_service.authenticate_admin_user(db, login_data)
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="手机号或密码错误，或账户非管理员/技师",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # 登录成功，创建 Token
     access_token = auth_service.create_access_token(subject=user.uid)
     
     return TokenResponse(access_token=access_token)

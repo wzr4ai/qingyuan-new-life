@@ -9,10 +9,14 @@ from sqlalchemy.orm import joinedload # <-- 1. 导入 joinedload
 from sqlalchemy.exc import IntegrityError # <-- 2. 导入 IntegrityError
 from jose import jwt, JWTError
 
+from passlib.context import CryptContext
+
 from src.core.config import settings
 # 3. 导入两个模型
 from src.shared.models.user_models import User, SocialAccount 
-from .schemas import TokenPayload
+from .schemas import TokenPayload, AdminLoginRequest
+
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 # --- 微信 API (exchange_code_for_session 函数保持不变) ---
 WECHAT_SESSION_API = "https://api.weixin.qq.com/sns/jscode2session"
@@ -125,3 +129,39 @@ def create_access_token(subject: str) -> str:
     }
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """验证明文密码和哈希密码是否匹配"""
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password: str) -> str:
+    """生成密码的哈希值"""
+    return pwd_context.hash(password)
+
+async def authenticate_admin_user(
+    db: AsyncSession, 
+    login_data: AdminLoginRequest
+) -> User | None:
+    """
+    验证管理员/技师的手机号和密码
+    """
+    # 1. 查找用户
+    query = select(User).where(User.phone == login_data.phone)
+    result = await db.execute(query)
+    user = result.scalars().first()
+
+    # 2. 检查用户是否存在，以及角色是否正确
+    if not user or user.role not in ('admin', 'technician'):
+        return None # 用户不存在，或只是个普通客户
+
+    # 3. 检查密码是否正确
+    if not user.password_hash or not verify_password(login_data.password, user.password_hash):
+        return None # 密码错误
+        
+    return user
+
+# --- (可选，但推荐) 创建一个设置密码的辅助脚本 ---
+# 您需要一种方式来为您自己（管理员）设置初始密码。
+# 我们可以稍后创建一个受保护的 "change-password" 接口，
+# 但现在，您可能需要 *手动* 在数据库中设置一次哈希密码。
+# 或者，我们可以添加一个临时工具函数。
