@@ -1,8 +1,10 @@
 # qingyuan-new-life/backend/src/main.py
 from fastapi import FastAPI
 #from core.lifespan import lifespan
-from src.core.config import settings
 
+from fastapi.middleware.cors import CORSMiddleware
+
+from src.core.config import settings
 from src.modules.auth.router import router as auth_router
 from src.modules.test.router import router as test_router
 from src.modules.admin.router import router as admin_router
@@ -27,6 +29,24 @@ app = FastAPI(
     # 仅在非生产环境下启用文档
     docs_url="/docs" if settings.ENVIRONMENT != "production" else None,
 )
+
+# 定义允许的跨域来源
+origins = [
+    "http://localhost",
+    "http://localhost:8000",
+    "http://localhost:3000",
+    "https://admin.qyxs.online",
+    "https://qyxs.online",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # 添加一个根路径，用于健康检查或欢迎信息
 @app.get("/status", summary="服务根路径", tags=["Default"])

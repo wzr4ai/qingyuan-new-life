@@ -3,9 +3,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.modules.auth.security import get_current_user
+from src.shared.models.user_models import User
 from src.core.database import get_db
 from . import service as auth_service
-from .schemas import WxLoginRequest, TokenResponse, AdminLoginRequest
+from .schemas import WxLoginRequest, TokenResponse, AdminLoginRequest, UserInfoResponse
 
 router = APIRouter(
     tags=["Authentication 用户认证"],
@@ -87,6 +89,23 @@ async def admin_login(
     access_token = auth_service.create_access_token(subject=user.uid)
     
     return TokenResponse(access_token=access_token)
+
+@router.get(
+    "/me",
+    response_model=UserInfoResponse,
+    summary="获取当前登录用户信息 (V7)"
+)
+async def read_users_me(
+    current_user: User = Depends(get_current_user) # <-- 核心：自动验证 Token
+):
+    """
+    (Customer, Technician, Admin)
+    获取当前已认证用户的详细信息。
+    前端在登录成功后必须调用此接口，以获取用户的 `role`。
+    """
+    # current_user 是从 get_current_user 依赖注入的
+    # SQLAlchemy (Async) 模型对象
+    return current_user
 
 # --- 未来扩展 ---
 # @router.post("/xhs-login", ...)

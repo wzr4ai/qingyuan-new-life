@@ -1,6 +1,7 @@
 # src/modules/auth/schemas.py
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
+from typing import Optional, List
 
 class WxLoginRequest(BaseModel):
     """
@@ -27,3 +28,15 @@ class AdminLoginRequest(BaseModel):
     """
     phone: str
     password: str
+
+class UserInfoResponse(BaseModel):
+    """
+    用于 'GET /auth/me' 接口返回
+    """
+    uid: str
+    role: str
+    nickname: Optional[str] = None
+    phone: Optional[str] = None
+    avatar_url: Optional[str] = None
+    
+    model_config = ConfigDict(from_attributes=True)
